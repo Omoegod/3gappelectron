@@ -51,11 +51,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     tabButtons.forEach(button => {
         button.addEventListener('click', () => {
-            // Удаляем активный класс со всех кнопок и контента
             tabButtons.forEach(btn => btn.classList.remove('active'));
             tabContents.forEach(content => content.classList.remove('active'));
 
-            // Добавляем активный класс к текущей кнопке и соответствующему контенту
             button.classList.add('active');
             document.getElementById(button.dataset.tab).classList.add('active');
         });
