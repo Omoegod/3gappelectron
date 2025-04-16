@@ -7,6 +7,22 @@ const isDevMode = process.env.NODE_ENV === 'development';
 
 let settingsWindow;
 
+
+ipcMain.on('read-module', (event, data) => {
+  console.log('Received data from renderer:', data);
+  saveConfig(data); // Сохранение данных в конфигурацию
+  console.log('Data saved to config:', data);
+  
+  // Здесь вы можете обработать данные, полученные из рендерера
+  // Например, отправить их обратно в рендерер или выполнить другие действия
+});
+
+ipcMain.on('write-module', (event, data) => {
+  console.log('Received data from renderer:', data);
+  // Здесь вы можете обработать данные, полученные из рендерера
+  // Например, отправить их обратно в рендерер или выполнить другие действия
+});
+
 ipcMain.handle('get-com-ports', async () => {
   console.log('get-com-ports event received');
   try {
@@ -18,6 +34,8 @@ ipcMain.handle('get-com-ports', async () => {
       return [];
   }
 });
+
+
 
 ipcMain.on('open-settings-window', () => {
   console.log('open-settings-window event received');

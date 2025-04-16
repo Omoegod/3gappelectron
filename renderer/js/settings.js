@@ -63,3 +63,5 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('Ошибка при заполнении COM-портов:', error);
     }
 });
+
+

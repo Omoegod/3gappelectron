@@ -1,4 +1,4 @@
-const { ipcRenderer } = require('electron');
+const { ipcRenderer, ipcMain } = require('electron');
 
 document.addEventListener('DOMContentLoaded', async () => {
   try {
@@ -42,6 +42,31 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     } else {
         console.error('Кнопка с ID "btn6" не найдена.');
+    }
+});
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    const readButton = document.getElementById('btn1');
+    if (readButton) {
+        readButton.addEventListener('click', () => {
+            ipcRenderer.send('read-module');
+        });
+    } else {
+        console.error('Кнопка с ID "btn1" не найдена.');
+    }
+});
+
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    const writeButton = document.getElementById('btn2');
+    if (writeButton) {
+        writeButton.addEventListener('click', () => {
+            ipcRenderer.send('write-module');
+        });
+    } else {
+        console.error('Кнопка с ID "btn2" не найдена.');
     }
 });
 
