@@ -1,0 +1,34 @@
+{
+  "name": "3gappelectron",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^22.3.27",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.example.myapp",
+    "productName": "MyApp",
+    "win": {
+      "target": "portable"
+    },
+    "nsis": {
+      "oneClick": false
+    },
+    "extraMetadata": {
+      "electron": "22.0.0"
+    }
+  },
+  "dependencies": {
+    "serialport": "^13.0.0"
+  }
+}

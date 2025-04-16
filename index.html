@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Electron App</title>
+  <link rel="stylesheet" href="./renderer/css/styles.css">
+  <script src="./renderer/js/renderer.js"></script>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="buttons">
+        <button id="btn1">Чтение</button>
+        <button id="btn2">Запись</button>
+        <button id="btn3">Сохранить</button>
+        <button id="btn4">Сохранить как</button>
+        <button id="btn5">Загрузить</button>
+        <button id="btn6">Настройки</button>
+      </div>
+    </div>
+    <div class="content">
+      <div class="connect">
+        <p>Подключение</p>
+        <select id="typeConnect">
+          <option value="1">Опто</option>
+          <option value="2">USB</option>
+          <option value="3">Интернет (TCP)</option>
+        </select>
+      </div>
+
+      <div class="networkSettings">
+        <p>Настройки сети</p>
+        <div class="wrap">
+          <p>Режим GSM</p>
+          <select id="typeGSM">
+            <option value="1">AUTO</option>
+            <option value="2">2G</option>
+            <option value="3">3G</option>
+            <option value="4">4G</option>
+            <option value="5">2G+3G</option>
+            <option value="6">2G+4G</option>
+            <option value="7">3G+4G</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="GPRSsettings">
+        <p>Настройки GPRS</p>
+        <div class="wrap">
+          <p>APN</p>
+          <input type="text" id="apn" />
+        </div>
+        <div class="wrap">
+          <p>Имя пользователя</p>
+          <input type="text" id="username" />
+        </div>
+        <div class="wrap">
+          <p>Пароль</p>
+          <input type="text" id="password" />
+        </div>
+        <div class="wrap">
+          <p>Режим подключения</p>
+          <select id="tcp">
+            <option value="1">TCP Сервер</option>
+          </select>
+        </div>
+        <div class="wrap">
+          <p>Порт</p>
+          <input type="text" id="port" />
+        </div>
+      </div>
+
+      <div class="uartSettings">
+        <p>Настройки UART</p>
+        <div class="tabs">
+          <button class="tab-button active" data-tab="uart1">Основной порт</button>
+          <button class="tab-button" data-tab="uart2">Дополнительный порт</button>
+        </div>
+        <div class="tab-content active" id="uart1">
+          <div class="wrap">
+            <p>Скорость</p>
+            <select id="baudrate1">
+              <option value="2400">2400</option>
+              <option value="4800">4800</option>
+              <option value="7200">7200</option>
+              <option value="9600">9600</option>
+              <option value="115200">115200</option>
+            </select>
+          </div>
+          <div class="wrap">
+            <p>Биты данных</p>
+            <select id="dataBits1">
+              <option value="8">8</option>
+              <option value="7">7</option>
+            </select>
+          </div>
+          <div class="wrap">
+            <p>Стоп биты</p>
+            <select id="stopBits1">
+              <option value="1">1</option>
+              <option value="2">2</option>
+            </select>
+          </div>
+          <div class="wrap">
+            <p>Паритет</p>
+            <select id="parity1">
+              <option value="None">None</option>
+              <option value="Even">Even</option>
+              <option value="Odd">Odd</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="tab-content" id="uart2">
+          <div class="wrap">
+            <p>Скорость</p>
+            <select id="baudrate2">
+              <option value="2400">2400</option>
+              <option value="4800">4800</option>
+              <option value="7200">7200</option>
+              <option value="9600">9600</option>
+              <option value="115200">115200</option>
+            </select>
+          </div>
+          <div class="wrap">
+            <p>Биты данных</p>
+            <select id="dataBits2">
+              <option value="8">8</option>
+              <option value="7">7</option>
+            </select>
+          </div>
+          <div class="wrap">
+            <p>Стоп биты</p>
+            <select id="stopBits2">
+              <option value="1">1</option>
+              <option value="2">2</option>
+            </select>
+          </div>
+          <div class="wrap">
+            <p>Паритет</p>
+            <select id="parity2">
+              <option value="None">None</option>
+              <option value="Even">Even</option>
+              <option value="Odd">Odd</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="timeoutSettings">
+        <p>Настройки таймаута</p>
+        <div class="wrap">
+          <p>Таймаут ожидания ответа</p>
+          <input type="text" id="toutTCP" />
+        </div>
+        <div class="wrap">
+          <p>Перезагрузка модуля</p>
+          <input type="text" id="toutReload" />
+        </div>
+        <div class="wrap">
+          <p>Таймаут SIM</p>
+          <input type="text" id="toutSIM" />
+        </div>
+        <div class="wrap">
+          <p>Таймаут GPRS</p>
+          <input type="text" id="toutNet" />
+        </div>
+        <div class="wrap">
+          <p>Таймаут TCP</p>
+          <input type="text" id="toutSRV" />
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <div class="signalLvl">
+        <p>Уровень сигнала</p>
+        <input type="text" id="rssi" disabled />
+        <input type="text" id="good" value="Отличный" disabled style="background: lightgreen;" />
+        <input type="text" id="normal" value="Нормальный" disabled style="background: lightsalmon;" />
+        <input type="text" id="bad" value="Плохой" disabled style="background: lightcoral;" />
+      </div>
+      <div class="dataModel">
+        <p>Информация о модуле</p>
+        <div class="wrap2">
+
+          <div class="wrap">
+            <p>Модель</p>
+            <input type="text" id="model" />
+          </div>
+          <div class="wrap">
+            <p>Версия ПО</p>
+            <input type="text" id="software" />
+          </div>
+          <div class="wrap">
+            <p>Ревизия</p>
+            <input type="text" id="hardware" />
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</body>
+
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Настройки подключения</title>
+    <link rel="stylesheet" href="./renderer/css/styles.css">
+</head>
+
+<body>
+    <div class="container">
+        <h2>Настройки подключения</h2>
+        <div class="tabs">
+            <button class="tab-button active" data-tab="opto">Опто</button>
+            <button class="tab-button" data-tab="usb">USB</button>
+            <button class="tab-button" data-tab="rf232">RF232</button>
+            <button class="tab-button" data-tab="TCP/IP">TCP/IP</button>
+        </div>
+        
+        <div class="tab-content active" id="opto">
+            <div class="wrap">
+                <p>COM-порт</p>
+                <select id="comPortOpto" > </select>
+            </div>
+            <div class="wrap">
+                <p>Скорость</p>
+                <select id="baudrateOpto">
+                    <option value="2400">2400</option>
+                </select>
+            </div>
+            <div class="wrap">
+                <p>Паритет</p>
+                <select id="parityOpto">
+                    <option value="Even">Even</option>
+                </select>
+            </div>
+            <div class="wrap">
+                <p>Стоп биты</p>
+                <select id="stopBitsOpto">
+                    <option value="1">1</option>
+                </select>
+            </div>
+            <div class="wrap">
+                <p>Управление потоком</p>
+                <select id="flowControlOpto">
+                    <option value="rts">Запитка от RTS</option>
+                </select>
+            </div>
+        </div>
+        <div class="tab-content" id="usb">
+            <div class="wrap">
+                <p>COM-порт</p>
+                <select id="comPortUSB" ></select>
+            </div>
+            <div class="wrap">
+                <p>Скорость</p>
+                <select id="baudrateUSB">
+                    <option value="2400">2400</option>
+                    <option value="4800">4800</option>
+                    <option value="7200">7200</option>
+                    <option value="9600">9600</option>
+                    <option value="115200">115200</option>
+                </select>
+            </div>
+            <div class="wrap">
+                <p>Паритет</p>
+                <select id="parityUSB">
+                    <option value="Even">Even</option>
+                    <option value="Odd">Odd</option>
+                    <option value="None">None</option>
+                </select>
+                </div>
+            <div class="wrap">
+                <p>Стоп биты</p>
+                <select id="stopBitsUSB">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                </select>
+            </div>
+            <div class="wrap">
+                <p>Биты четности</p>
+                <select id="dataBitsUSB">
+                    <option value="8">8</option>
+                    <option value="7">7</option>
+                </select>   
+            </div>
+        </div>
+        <div class="tab-content" id="rf232">
+            <div class="wrap">
+                <p>COM-порт</p>
+                <select id="comPortRF232" ></select>
+            </div>
+            <div class="wrap">
+                <p>Скорость</p>
+                <select id="baudrateRF232">
+                    <option value="9600">9600</option>
+                </select>
+            </div>
+            <div class="wrap">
+                <p>Паритет</p>
+                <select id="parityRF232">
+                    <option value="None">None</option>
+                </select>
+            </div>
+            <div class="wrap">
+                <p>Стоп биты</p>
+                <select id="stopBitsRF232">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                </select>
+            </div>  
+            <div class="wrap">
+                <p>Биты четности</p>
+                <select id="dataBitsRF232">
+                    <option value="8">8</option>
+                    <option value="7">7</option>
+                </select>   
+            </div>
+        </div>
+        <div class="tab-content" id="TCP/IP">
+            <div class="wrap">
+                <p>IP-адрес</p>
+                <input type="text" id="ipAddress" placeholder="Введите IP-адрес">
+            </div>
+            <div class="wrap">
+                <p>Порт</p>
+                <input type="text" id="portTcpIp" placeholder="Введите порт">
+            </div>
+        </div>
+
+        <button id="saveSettings">Сохранить</button>
+    </div>
+    <script src="./renderer/js/settings.js"></script>
+</body>
+
+</html>

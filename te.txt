@@ -1,0 +1,145 @@
+npm run build -- --win --ia32
+
+> 3gappelectron@1.0.0 build    
+> electron-builder --win --ia32
+
+  • electron-builder  version=26.0.12 os=10.0.19044
+  • loaded configuration  file=package.json ("build" field)
+  • description is missed in the package.json  appPackageFile=C:\Users\sobol\Desktop\3GappElectron\package.json
+  • writing effective config  file=dist\builder-effective-config.yaml
+  • executing @electron/rebuild  electronVersion=22.3.27 arch=ia32 buildFromSource=false appDir=./
+  • installing native dependencies  arch=ia32
+  • completed installing native dependencies
+  • packaging       platform=win32 arch=ia32 electron=22.3.27 appOutDir=dist\win-ia32-unpacked
+  • downloading     url=https://github.com/electron/electron/releases/download/v22.3.27/electron-v22.3.27-win32-ia32.zip size=91 MB parts=8
+  • downloaded      url=https://github.com/electron/electron/releases/download/v22.3.27/electron-v22.3.27-win32-ia32.zip duration=9.603s
+  • updating asar integrity executable resource  executablePath=dist\win-ia32-unpacked\MyApp.exe
+  • default Electron icon is used  reason=application icon is not set
+  • downloading     url=https://github.com/electron-userland/electron-builder-binaries/releases/download/winCodeSign-2.6.0/winCodeSign-2.6.0.7z size=5.6 MB parts=1
+  • downloaded      url=https://github.com/electron-userland/electron-builder-binaries/releases/download/winCodeSign-2.6.0/winCodeSign-2.6.0.7z duration=2.166s
+  ⨯ cannot execute  cause=exit status 2
+                    out=
+    7-Zip (a) 21.07 (x64) : Copyright (c) 1999-2021 Igor Pavlov : 2021-12-26
+
+    Scanning the drive for archives:
+    1 file, 5635384 bytes (5504 KiB)
+
+    Extracting archive: C:\Users\sobol\AppData\Local\electron-builder\Cache\winCodeSign\549811811.7z
+    --
+    Path = C:\Users\sobol\AppData\Local\electron-builder\Cache\winCodeSign\549811811.7z
+    Type = 7z
+    Physical Size = 5635384
+    Headers Size = 1492
+    Method = LZMA2:24m LZMA:20 BCJ2
+    Solid = +
+    Blocks = 2
+
+
+    Sub items Errors: 2
+
+    Archives with Errors: 1
+
+    Sub items Errors: 2
+
+                    errorOut=ERROR: Cannot create symbolic link : ������ �� �������� �ॡ㥬묨 �ࠢ���. : C:\Users\sobol\AppData\Local\electron-builder\Cache\winCodeSign\549811811\darwin\10.12\lib\libcrypto.dylib
+    ERROR: Cannot create symbolic link : ������ �� �������� �ॡ㥬묨 �ࠢ���. : C:\Users\sobol\AppData\Local\electron-builder\Cache\winCodeSign\549811811\darwin\10.12\lib\libssl.dylib
+
+                    command='C:\Users\sobol\Desktop\3GappElectron\node_modules\7zip-bin\win\x64\7za.exe' x -snld -bd 'C:\Users\sobol\AppData\Local\electron-builder\Cache\winCodeSign\549811811.7z' '-oC:\Users\sobol\AppData\Local\electron-builder\Cache\winCodeSign\549811811'
+                    workingDir=C:\Users\sobol\AppData\Local\electron-builder\Cache\winCodeSign
+  • Above command failed, retrying 3 more times
+  • downloading     url=https://github.com/electron-userland/electron-builder-binaries/releases/download/winCodeSign-2.6.0/winCodeSign-2.6.0.7z size=5.6 MB parts=1
+  • downloaded      url=https://github.com/electron-userland/electron-builder-binaries/releases/download/winCodeSign-2.6.0/winCodeSign-2.6.0.7z duration=1.81s
+  ⨯ cannot execute  cause=exit status 2
+                    out=
+    7-Zip (a) 21.07 (x64) : Copyright (c) 1999-2021 Igor Pavlov : 2021-12-26
+
+    Scanning the drive for archives:
+    1 file, 5635384 bytes (5504 KiB)
+
+    Extracting archive: C:\Users\sobol\AppData\Local\electron-builder\Cache\winCodeSign\960527623.7z
+    --
+    Path = C:\Users\sobol\AppData\Local\electron-builder\Cache\winCodeSign\960527623.7z
+    Type = 7z
+    Physical Size = 5635384
+    Headers Size = 1492
+    Method = LZMA2:24m LZMA:20 BCJ2
+    Solid = +
+    Blocks = 2
+
+
+    Sub items Errors: 2
+
+    Archives with Errors: 1
+
+    Sub items Errors: 2
+
+                    errorOut=ERROR: Cannot create symbolic link : ������ �� �������� �ॡ㥬묨 �ࠢ���. : C:\Users\sobol\AppData\Local\electron-builder\Cache\winCodeSign\960527623\darwin\10.12\lib\libcrypto.dylib
+    ERROR: Cannot create symbolic link : ������ �� �������� �ॡ㥬묨 �ࠢ���. : C:\Users\sobol\AppData\Local\electron-builder\Cache\winCodeSign\960527623\darwin\10.12\lib\libssl.dylib
+
+                    command='C:\Users\sobol\Desktop\3GappElectron\node_modules\7zip-bin\win\x64\7za.exe' x -snld -bd 'C:\Users\sobol\AppData\Local\electron-builder\Cache\winCodeSign\960527623.7z' '-oC:\Users\sobol\AppData\Local\electron-builder\Cache\winCodeSign\960527623'
+                    workingDir=C:\Users\sobol\AppData\Local\electron-builder\Cache\winCodeSign
+  • Above command failed, retrying 3 more times
+  • downloading     url=https://github.com/electron-userland/electron-builder-binaries/releases/download/winCodeSign-2.6.0/winCodeSign-2.6.0.7z size=5.6 MB parts=1
+  • downloaded      url=https://github.com/electron-userland/electron-builder-binaries/releases/download/winCodeSign-2.6.0/winCodeSign-2.6.0.7z duration=1.778s
+  ⨯ cannot execute  cause=exit status 2
+                    out=
+    7-Zip (a) 21.07 (x64) : Copyright (c) 1999-2021 Igor Pavlov : 2021-12-26
+
+    Scanning the drive for archives:
+    1 file, 5635384 bytes (5504 KiB)
+
+    Extracting archive: C:\Users\sobol\AppData\Local\electron-builder\Cache\winCodeSign\680587695.7z
+    --
+    Path = C:\Users\sobol\AppData\Local\electron-builder\Cache\winCodeSign\680587695.7z
+    Type = 7z
+    Physical Size = 5635384
+    Headers Size = 1492
+    Method = LZMA2:24m LZMA:20 BCJ2
+    Solid = +
+    Blocks = 2
+
+
+    Sub items Errors: 2
+
+    Archives with Errors: 1
+
+    Sub items Errors: 2
+
+                    errorOut=ERROR: Cannot create symbolic link : ������ �� �������� �ॡ㥬묨 �ࠢ���. : C:\Users\sobol\AppData\Local\electron-builder\Cache\winCodeSign\680587695\darwin\10.12\lib\libcrypto.dylib
+    ERROR: Cannot create symbolic link : ������ �� �������� �ॡ㥬묨 �ࠢ���. : C:\Users\sobol\AppData\Local\electron-builder\Cache\winCodeSign\680587695\darwin\10.12\lib\libssl.dylib
+
+                    command='C:\Users\sobol\Desktop\3GappElectron\node_modules\7zip-bin\win\x64\7za.exe' x -snld -bd 'C:\Users\sobol\AppData\Local\electron-builder\Cache\winCodeSign\680587695.7z' '-oC:\Users\sobol\AppData\Local\electron-builder\Cache\winCodeSign\680587695'
+                    workingDir=C:\Users\sobol\AppData\Local\electron-builder\Cache\winCodeSign
+  • Above command failed, retrying 3 more times
+  • downloading     url=https://github.com/electron-userland/electron-builder-binaries/releases/download/winCodeSign-2.6.0/winCodeSign-2.6.0.7z size=5.6 MB parts=1
+  • downloaded      url=https://github.com/electron-userland/electron-builder-binaries/releases/download/winCodeSign-2.6.0/winCodeSign-2.6.0.7z duration=1.82s
+  ⨯ cannot execute  cause=exit status 2
+                    out=
+    7-Zip (a) 21.07 (x64) : Copyright (c) 1999-2021 Igor Pavlov : 2021-12-26
+
+    Scanning the drive for archives:
+    1 file, 5635384 bytes (5504 KiB)
+
+    Extracting archive: C:\Users\sobol\AppData\Local\electron-builder\Cache\winCodeSign\192942343.7z
+    --
+    Path = C:\Users\sobol\AppData\Local\electron-builder\Cache\winCodeSign\192942343.7z
+    Type = 7z
+    Physical Size = 5635384
+    Headers Size = 1492
+    Method = LZMA2:24m LZMA:20 BCJ2
+    Solid = +
+    Blocks = 2
+
+
+    Sub items Errors: 2
+
+    Archives with Errors: 1
+
+    Sub items Errors: 2
+
+                    errorOut=ERROR: Cannot create symbolic link : ������ �� �������� �ॡ㥬묨 �ࠢ���. : C:\Users\sobol\AppData\Local\electron-builder\Cache\winCodeSign\192942343\darwin\10.12\lib\libcrypto.dylib
+    ERROR: Cannot create symbolic link : ������ �� �������� �ॡ㥬묨 �ࠢ���. : C:\Users\sobol\AppData\Local\electron-builder\Cache\winCodeSign\192942343\darwin\10.12\lib\libssl.dylib
+
+                    command='C:\Users\sobol\Desktop\3GappElectron\node_modules\7zip-bin\win\x64\7za.exe' x -snld -bd 'C:\Users\sobol\AppData\Local\electron-builder\Cache\winCodeSign\192942343.7z' '-oC:\Users\sobol\AppData\Local\electron-builder\Cache\winCodeSign\192942343'
+                    workingDir=C:\Users\sobol\AppData\Local\electron-builder\Cache\winCodeSign
+  • Above command failed, retrying 3 more times
