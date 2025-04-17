@@ -22,10 +22,8 @@ function saveConfig(config) {
     }
 }
 
-const modemConfig = loadConfig() 
 
 module.exports = {
-    modemConfig,
     loadConfig,
     saveConfig
 }
