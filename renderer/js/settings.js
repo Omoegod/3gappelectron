@@ -2,25 +2,26 @@ const { ipcRenderer } = require('electron');
 
 document.addEventListener('DOMContentLoaded', async () => {
     try {
-      const config = await ipcRenderer.invoke('get-config');
-  
-      document.getElementById('comPortOpto').value = config.optCom?.comPort || "";
-      document.getElementById('baudrateOpto').value = config.optCom?.baudRate || 2400;
-      document.getElementById('flowControlOpto').value = config.optCom?.flowControl || 'rts';
-      document.getElementById('stopBitsOpto').value = config.optCom?.stopBits || 1;
-      document.getElementById('parityOpto').value = config.optCom?.parity || 'Even';
-      document.getElementById('comPortUSB').value = config.usbCom?.comPort || "";
-      document.getElementById('baudrateUSB').value = config.usbCom?.baudRate || 9600;
-      document.getElementById('parityUSB').value = config.usbCom?.parity || "";
-      document.getElementById('stopBitsUSB').value = config.usbCom?.stopBits || "";
-      document.getElementById('dataBitsUSB').value = config.usbCom?.dataBits || "";
-      document.getElementById('ipAddress').value = config.tcp?.ip || "";
-      document.getElementById('portTcpIp').value = config.tcp?.port || "";
-      document.getElementById('comPortRF232').value = config.rf232?.comPort || "";
-      document.getElementById('baudrateRF232').value = config.rf232?.baudRate || "";
-      document.getElementById('parityRF232').value = config.rf232?.parity || "";
-      document.getElementById('stopBitsRF232').value = config.rf232?.stopBits || "";
-      document.getElementById('dataBitsRF232').value = config.rf232?.dataBits || "";
+      const config = await ipcRenderer.invoke('get-config-local');
+      console.log('Полученная конфигурация:', config);
+      
+      document.getElementById('comPortOpto').value = config.comPortOpto || "";
+      document.getElementById('baudrateOpto').value = config.baudRateOpto || 2400;
+      document.getElementById('flowControlOpto').value = config.flowControlOpto || 'rts';
+      document.getElementById('stopBitsOpto').value = config.stopBitsOpto || 1;
+      document.getElementById('parityOpto').value = config.parityOpto || 'Even';
+      document.getElementById('comPortUsb').value = config.comPortUsb || "";
+      document.getElementById('baudrateUsb').value = config.baudRateUsb || 9600;
+      document.getElementById('parityUsb').value = config.parityUsb || "None";
+      document.getElementById('stopBitsUsb').value = config.stopBitsUsb || 1;
+      document.getElementById('dataBitsUsb').value = config.dataBitsUsb || 8;
+      document.getElementById('ipTcp').value = config.ipTcp || "";
+      document.getElementById('portTcp').value = config.portTcp || "";
+      document.getElementById('comPortRf').value = config.comPortRf || "";
+      document.getElementById('baudrateRf').value = config.baudRateRf || 9600;
+      document.getElementById('parityRf').value = config.parityRf || "None";
+      document.getElementById('stopBitsRf').value = config.stopBitsRf || 1;
+      document.getElementById('dataBitsRf').value = config.dataBitsRf || 8;
      
     } catch (error) {
       console.error('Ошибка при загрузке конфигурации:', error);

@@ -22,10 +22,10 @@
     <div class="content">
       <div class="connect">
         <p>Подключение</p>
-        <select id="typeConnect">
+        <select id="connType">
           <option value="1">Опто</option>
           <option value="2">USB</option>
-          <option value="3">RF232</option>
+          <option value="3">RF232</option> 
           <option value="4">Интернет (TCP)</option>
         </select>
       </div>
@@ -34,8 +34,8 @@
         <p>Настройки сети</p>
         <div class="wrap">
           <p>Режим GSM</p>
-          <select id="typeGSM">
-            <option value="1">AUTO</option>
+          <select id="GSM_MODE">
+            <option value="0">AUTO</option>
             <option value="2">2G</option>
             <option value="3">3G</option>
             <option value="4">4G</option>
@@ -50,25 +50,25 @@
         <p>Настройки GPRS</p>
         <div class="wrap">
           <p>APN</p>
-          <input type="text" id="apn" />
+          <input type="text" id="APN" />
         </div>
         <div class="wrap">
           <p>Имя пользователя</p>
-          <input type="text" id="username" />
+          <input type="text" id="USER" />
         </div>
         <div class="wrap">
           <p>Пароль</p>
-          <input type="text" id="password" />
+          <input type="text" id="PWD" />
         </div>
         <div class="wrap">
           <p>Режим подключения</p>
-          <select id="tcp">
+          <select id="OP_MODE">
             <option value="1">TCP Сервер</option>
           </select>
         </div>
         <div class="wrap">
           <p>Порт</p>
-          <input type="text" id="port" />
+          <input type="text" id="PORT_SRV" />
         </div>
       </div>
 
@@ -81,7 +81,7 @@
         <div class="tab-content active" id="uart1">
           <div class="wrap">
             <p>Скорость</p>
-            <select id="baudrate1">
+            <select id="BAUDRATE">
               <option value="2400">2400</option>
               <option value="4800">4800</option>
               <option value="7200">7200</option>
@@ -91,21 +91,21 @@
           </div>
           <div class="wrap">
             <p>Биты данных</p>
-            <select id="dataBits1">
+            <select id="DATA_SIZE">
               <option value="8">8</option>
               <option value="7">7</option>
             </select>
           </div>
           <div class="wrap">
             <p>Стоп биты</p>
-            <select id="stopBits1">
+            <select id="STOP_SIZE">
               <option value="1">1</option>
               <option value="2">2</option>
             </select>
           </div>
           <div class="wrap">
             <p>Паритет</p>
-            <select id="parity1">
+            <select id="PARITY">
               <option value="None">None</option>
               <option value="Even">Even</option>
               <option value="Odd">Odd</option>
@@ -116,7 +116,7 @@
         <div class="tab-content" id="uart2">
           <div class="wrap">
             <p>Скорость</p>
-            <select id="baudrate2">
+            <select id="BAUDRATE3">
               <option value="2400">2400</option>
               <option value="4800">4800</option>
               <option value="7200">7200</option>
@@ -126,21 +126,21 @@
           </div>
           <div class="wrap">
             <p>Биты данных</p>
-            <select id="dataBits2">
+            <select id="DATA_SIZE3">
               <option value="8">8</option>
               <option value="7">7</option>
             </select>
           </div>
           <div class="wrap">
             <p>Стоп биты</p>
-            <select id="stopBits2">
+            <select id="STOP_SIZE3">
               <option value="1">1</option>
               <option value="2">2</option>
             </select>
           </div>
           <div class="wrap">
             <p>Паритет</p>
-            <select id="parity2">
+            <select id="PARITY3">
               <option value="None">None</option>
               <option value="Even">Even</option>
               <option value="Odd">Odd</option>
@@ -153,30 +153,30 @@
         <p>Настройки таймаута</p>
         <div class="wrap">
           <p>Таймаут ожидания ответа</p>
-          <input type="text" id="toutTCP" />
+          <input type="text" id="TOUT_TCP" />
         </div>
         <div class="wrap">
           <p>Перезагрузка модуля</p>
-          <input type="text" id="toutReload" />
+          <input type="text" id="TOUT_RELOAD" />
         </div>
         <div class="wrap">
           <p>Таймаут SIM</p>
-          <input type="text" id="toutSIM" />
+          <input type="text" id="TOUT_SIM" />
         </div>
         <div class="wrap">
           <p>Таймаут GPRS</p>
-          <input type="text" id="toutNet" />
+          <input type="text" id="TOUT_NET" />
         </div>
         <div class="wrap">
           <p>Таймаут TCP</p>
-          <input type="text" id="toutSRV" />
+          <input type="text" id="TOUT_SRV" />
         </div>
       </div>
     </div>
     <div class="footer">
       <div class="signalLvl">
         <p>Уровень сигнала</p>
-        <input type="text" id="rssi" disabled />
+        <input type="text" id="RSSI" disabled />
         <input type="text" id="good" value="Отличный" disabled style="background: lightgreen;" />
         <input type="text" id="normal" value="Нормальный" disabled style="background: lightsalmon;" />
         <input type="text" id="bad" value="Плохой" disabled style="background: lightcoral;" />
@@ -187,15 +187,15 @@
 
           <div class="wrap">
             <p>Модель</p>
-            <input type="text" id="model" />
+            <input type="text" id="DEV_MODEL" disabled/>
           </div>
           <div class="wrap">
             <p>Версия ПО</p>
-            <input type="text" id="software" />
+            <input type="text" id="APP_VER" disabled/>
           </div>
           <div class="wrap">
             <p>Ревизия</p>
-            <input type="text" id="hardware" />
+            <input type="text" id="HW_VER" disabled/>
           </div>
         </div>
 

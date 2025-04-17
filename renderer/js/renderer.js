@@ -2,28 +2,30 @@ const { ipcRenderer, ipcMain } = require('electron');
 
 document.addEventListener('DOMContentLoaded', async () => {
     try {
-        const config = await ipcRenderer.invoke('get-config');
+        const configModem = await ipcRenderer.invoke('get-config-modem');
 
-        document.getElementById('typeConnect').value = config.network?.connType || 1;
-        document.getElementById('typeGSM').value = config.network?.gsmMode || 1;
-        document.getElementById('apn').value = config.modem?.apn || '';
-        document.getElementById('username').value = config.modem?.user || '';
-        document.getElementById('password').value = config.modem?.password || '';
-        document.getElementById('tcp').value = config.network?.opMode || 1;
-        document.getElementById('port').value = config.network?.port || "";
-        document.getElementById('baudrate1').value = config.uart1?.baudRate || "";
-        document.getElementById('dataBits1').value = config.uart1?.dataBits || "";
-        document.getElementById('stopBits1').value = config.uart1?.stopBits || "";
-        document.getElementById('parity1').value = config.uart1?.parity || "";
-        document.getElementById('baudrate2').value = config.uart2?.baudRate || "";
-        document.getElementById('dataBits2').value = config.uart2?.dataBits || "";
-        document.getElementById('stopBits2').value = config.uart2?.stopBits || "";
-        document.getElementById('parity2').value = config.uart2?.parity || "";
-        document.getElementById('toutTCP').value = config.timeout?.timeoutOpenConn || "";
-        document.getElementById('toutReload').value = config.timeout?.timeoutModem || "";
-        document.getElementById('toutSIM').value = config.timeout?.timeoutSim || "";
-        document.getElementById('toutNet').value = config.timeout?.timeoutInet || "";
-        document.getElementById('toutSRV').value = config.timeout?.timeoutTcp || "";
+        const configLocal = await ipcRenderer.invoke('get-config-local');
+
+        document.getElementById('connType').value = configLocal.connType || 1;
+        document.getElementById('GSM_MODE').value = configModem.GSM_MODE || 0;
+        document.getElementById('APN').value = configModem.APN || '';
+        document.getElementById('USER').value = configModem.USER || '';
+        document.getElementById('PWD').value = configModem.PWD || '';
+        document.getElementById('OP_MODE').value = configModem.OP_MODE || 1;
+        document.getElementById('PORT_SRV').value = configModem.PORT_SRV || "";
+        document.getElementById('BAUDRATE').value = configModem.BAUDRATE || "";
+        document.getElementById('DATA_SIZE').value = configModem.DATA_SIZE || "";
+        document.getElementById('STOP_SIZE').value = configModem.STOP_SIZE || "";
+        document.getElementById('PARITY').value = configModem.PARITY || "";
+        document.getElementById('BAUDRATE3').value = configModem.BAUDRATE3 || "";
+        document.getElementById('DATA_SIZE3').value = configModem.DATA_SIZE3 || "";
+        document.getElementById('STOP_SIZE3').value = configModem.STOP_SIZE3 || "";
+        document.getElementById('PARITY3').value = configModem.PARITY3 || "";
+        document.getElementById('TOUT_TCP').value = configModem.TOUT_TCP || "";
+        document.getElementById('TOUT_RELOAD').value = configModem.TOUT_RELOAD || "";
+        document.getElementById('TOUT_SIM').value = configModem.TOUT_SIM || "";
+        document.getElementById('TOUT_NET').value = configModem.TOUT_NET || "";
+        document.getElementById('TOUT_SRV').value = configModem.TOUT_SRV || "";
 
 
     } catch (error) {
@@ -31,15 +33,51 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
+
+
 document.addEventListener('DOMContentLoaded', () => {
     const readButton = document.getElementById('btn1');
+
     if (readButton) {
         readButton.addEventListener('click', () => {
-            ipcRenderer.send('read-module');
+            const selectedType = document.getElementById('connType').value;
+            ipcRenderer.send('read-module', selectedType);
         });
     } else {
         console.error('Кнопка с ID "btn1" не найдена.');
     }
+
+    ipcRenderer.on('read-result', (event, result) => {
+        if (result.success) {
+            const data = result.data;
+            console.log('Данные успешно прочитаны:', data);
+            Object.keys(data).forEach(key => {
+                const el = document.getElementById(key);
+                if (el) {
+                    el.value = data[key];
+                } else {
+                    console.warn(`Поле с id "${key}" не найдено`);
+                }
+            });
+
+            const neededKeys = [
+                'APN', 'USER', 'PWD', 'OP_MODE', 'PORT_SRV',
+                'GSM_MODE', 'BAUDRATE', 'DATA_SIZE', 'STOP_SIZE', 'PARITY',
+                'BAUDRATE3', 'DATA_SIZE3', 'STOP_SIZE3', 'PARITY3',
+                'TOUT_TCP', 'TOUT_RELOAD', 'TOUT_SIM', 'TOUT_NET', 'TOUT_SRV',
+                'FTP_HOST', 'FTP_USER', 'FTP_PWD', 'FTP_PORT', 'FTP_FSIZE'
+            ];
+            const filteredData = {};
+            for (const key of neededKeys) {
+                if (key in data) {
+                    filteredData[key] = data[key];
+                }
+            }
+            ipcRenderer.send('save-config-modem', filteredData); // Сохраняем данные в файл
+        } else {
+            console.error('Ошибка при чтении:', result.error);
+        }
+    });
 });
 
 
@@ -49,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
         writeButton.addEventListener('click', () => {
             const newConfig = {
                 network: {
-                    connType: parseInt(document.getElementById('typeConnect').value),
+                    connType: parseInt(document.getElementById('connType').value),
                     gsmMode: parseInt(document.getElementById('typeGSM').value),
                     opMode: parseInt(document.getElementById('tcp').value),
                     port: parseInt(document.getElementById('port').value),
@@ -64,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     dataBits: parseInt(document.getElementById('dataBits1').value),
                     stopBits: parseInt(document.getElementById('stopBits1').value),
                     parity: document.getElementById('parity1').value,
-                    flowControl: 'none' 
+                    flowControl: 'none'
                 },
                 uart2: {
                     baudRate: parseInt(document.getElementById('baudrate2').value),

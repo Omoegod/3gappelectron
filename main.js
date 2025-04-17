@@ -1,105 +1,297 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
-
-const { loadConfig, saveConfig } = require('./renderer/js/modemConfig.js');
+const fs = require('fs');
+const { loadConfigLocal, loadConfigModem, saveConfigLocal, saveConfigModem, configPathLocal, configPathModem } = require('./renderer/js/modemConfig.js');
 const { SerialPort } = require('serialport');
+const net = require('net');
 
 const isDevMode = process.env.NODE_ENV === 'development';
 
 let settingsWindow;
+let mainWindow;
 
 
-ipcMain.on('read-module', async () => {
-  const config = loadConfig();
+ipcMain.on('read-module', async (event, connType) => {
+  const config = loadConfigLocal();
 
-  typeConnect = parseInt(config.network?.connType, 10);
+  connType = parseInt(connType, 10);
 
   let portPath = '';
   let portOptions = {};
 
-  if (typeConnect === 1) {
-    portPath = config.optCom?.comPort;
+  if (connType === 1) {
+    portPath = config.comPortOpto;
     portOptions = {
-      baudRate: config.optCom?.baudRate,
-      dataBits: config.optCom?.dataBits,
-      stopBits: config.optCom?.stopBits,
-      parity: config.optCom?.parity
-    };
-  }
-  else if (typeConnect === 2) {
-    portPath = config.usbCom?.comPort;
-    portOptions = {
-      baudRate: config.usbCom?.baudRate,
-      dataBits: config.usbCom?.dataBits,
-      stopBits: config.usbCom?.stopBits,
-      parity: config.usbCom?.parity
-    };
-  }
-  else if (typeConnect === 3) {
-    portPath = config.rf232com?.comPort;
-    portOptions = {
-      baudRate: config.rf232com?.baudRate,
-      dataBits: config.rf232com?.dataBits,
-      stopBits: config.rf232com?.stopBits,
-      parity: config.rf232com?.parity
-    };
-  } else if (typeConnect === 4) {
-    const tcpOptions = {
-      host: config.tcp?.ip,
-      port: config.tcp?.port,
-      timeout: config.tcp?.timeoutOpenConn
+      baudRate: parseInt(config.baudRateOpto, 10),
+      dataBits: parseInt(config.dataBitsOpto, 10),
+      stopBits: parseInt(config.stopBitsOpto, 10),
+      parity: config.parityOpto
     };
 
-    const client = new net.Socket(); // создаём TCP-клиент
+    const port = new SerialPort({ path: portPath, ...portOptions, autoOpen: false });
+
+    try {
+      await new Promise((resolve, reject) => {
+        port.open((err) => {
+          if (err) return reject(err);
+          console.log('Port open:', portPath);
+          resolve();
+        });
+      });
+
+      const message1 = Buffer.from([0x00, 0x03, 0x45, 0x41, 0x53, 0x59, 0xc9, 0xfd]);
+      port.write(message1, (err) => {
+        if (err) {
+          console.error('Sending error:', err.message);
+        } else {
+          console.log('Data sent');
+        }
+      });
+
+      let receivedData = '';
+      const timeoutMs = 5000;
+
+      const response1 = await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          console.warn('Waiting time expired for message 1');
+          reject(new Error('Timeout waiting for message 1'));
+        }, timeoutMs);
+
+        port.on('data', (data) => {
+          receivedData += data.toString();
+          console.log('Received data:', data.toString());
+
+          if (receivedData.length >= 10) {
+            clearTimeout(timeout);
+            resolve(receivedData);
+          }
+        });
+      });
+
+      console.log('Response to message 1:', receivedData);
+
+      const message2 = Buffer.from([0x43, 0x4F, 0x4E, 0x46, 0x49, 0x47, 0x52, 0x45, 0x41, 0x44, 0xCF, 0xDB]);
+      port.write(message2, (err) => {
+        if (err) {
+          console.error('Sending error for message 2:', err.message);
+        } else {
+          console.log('Message 2 sent');
+        }
+      });
+
+      const response2 = await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          console.warn('Waiting time expired for message 2');
+          reject(new Error('Timeout waiting for message 2'));
+        }, timeoutMs);
+
+        port.on('data', (data) => {
+          receivedData += data.toString();
+          console.log('Received data for message 2:', data.toString());
+
+          if (receivedData.length >= 10) {
+            clearTimeout(timeout);
+            resolve(receivedData);
+          }
+        });
+      });
+
+      console.log('Response to message 2:', receivedData);
+
+      port.close((err) => {
+        if (err) {
+          console.error('Error close port:', err.message);
+        } else {
+          console.log('Port closed:', portPath);
+        }
+      });
+
+      mainWindow.webContents.send('read-result', {
+        success: true,
+        data: receivedData
+      });
+
+    } catch (err) {
+      console.error('Error:', err.message);
+      mainWindow.webContents.send('read-result', {
+        success: false,
+        error: err.message
+      });
+    }
+    return;
+  }
+  else if (connType === 2) {
+    portPath = config.comPortUsb;
+    portOptions = {
+      baudRate: parseInt(config.baudRateUsb, 10),
+      dataBits: parseInt(config.dataBitsUsb, 10),
+      stopBits: parseInt(config.stopBitsUsb, 10),
+      parity: config.parityUsb
+    };
+  }
+  else if (connType === 3) {
+    portPath = config.comPortRf;
+    portOptions = {
+      baudRate: parseInt(config.baudRateRf, 10),
+      dataBits: parseInt(config.dataBitsRf, 10),
+      stopBits: parseInt(config.stopBitsRf, 10),
+      parity: config.parityRf
+    };
+    const port = new SerialPort({ path: portPath, ...portOptions, autoOpen: false });
+
+    try {
+      await new Promise((resolve, reject) => {
+        port.open((err) => {
+          if (err) return reject(err);
+          console.log('Port open:', portPath);
+          resolve();
+        });
+      });
+
+      const message1 = Buffer.from([0x00, 0x03, 0x45, 0x41, 0x53, 0x59, 0xc9, 0xfd]);
+      port.write(message1, (err) => {
+        if (err) {
+          console.error('Sending error:', err.message);
+        } else {
+          console.log('Data sent');
+        }
+      });
+
+      let receivedData = Buffer.alloc(0);
+      const timeoutMs = 5000;
+
+      const response1 = await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          console.warn('Waiting time expired for message 1');
+          reject(new Error('Timeout waiting for message 1'));
+        }, timeoutMs);
+
+        port.on('data', (data) => {
+          receivedData = Buffer.concat([receivedData, data]); 
+          console.log('Received data:', data.toString('hex'));
+
+          const expectedResponse = Buffer.from([0x00, 0x03, 0x45, 0x00, 0xb4, 0xc2]);
+          if (receivedData.length >= expectedResponse.length && receivedData.slice(0, expectedResponse.length).equals(expectedResponse)) {
+            clearTimeout(timeout);
+            resolve(receivedData); 
+          }
+        });
+      });
+
+      console.log('Response to message 1:', receivedData.toString('hex'));
+
+      const message2 = Buffer.from([0x43, 0x4F, 0x4E, 0x46, 0x49, 0x47, 0x52, 0x45, 0x41, 0x44, 0xCF, 0xDB]);
+      port.write(message2, (err) => {
+        if (err) {
+          console.error('Sending error for message 2:', err.message);
+        } else {
+          console.log('Message 2 sent');
+        }
+      });
+
+      const response2 = await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          console.warn('Waiting time expired for message 2');
+          reject(new Error('Timeout waiting for message 2'));
+        }, timeoutMs);
+
+        port.on('data', (data) => {
+          receivedData += data.toString();
+          console.log('Received data for message 2:', data.toString());
+
+          // if (receivedData.length >= 10) {
+          //   clearTimeout(timeout);
+          //   resolve(receivedData);
+          // }
+        });
+      });
+
+      console.log('Response to message 2:', receivedData);
+
+      port.close((err) => {
+        if (err) {
+          console.error('Error close port:', err.message);
+        } else {
+          console.log('Port closed:', portPath);
+        }
+      });
+
+      mainWindow.webContents.send('read-result', {
+        success: true,
+        data: receivedData
+      });
+
+    } catch (err) {
+      console.error('Error:', err.message);
+      mainWindow.webContents.send('read-result', {
+        success: false,
+        error: err.message
+      });
+    }
+    return;
+  } else if (connType === 4) {
+    const tcpOptions = {
+      host: config.ipTcp,
+      port: config.portTcp,
+      timeout: 2000
+    };
+
+    const client = new net.Socket();
 
     client.setTimeout(tcpOptions.timeout);
 
-    client.connect(tcpOptions.port, tcpOptions.host, () => {
-      console.log(`✅ Подключено к ${tcpOptions.host}:${tcpOptions.port}`);
 
-      // Отправка данных по TCP
+    client.connect(tcpOptions.port, tcpOptions.host, () => {
+      console.log(`Connect to ${tcpOptions.host}:${tcpOptions.port}`);
+
       const message = Buffer.from([0x43, 0x4F, 0x4E, 0x46, 0x49, 0x47, 0x52, 0x45, 0x41, 0x44, 0xCF, 0xDB]);
       client.write(message, () => {
-        console.log('📤 Данные отправлены по TCP');
+        console.log('Data send to TCP');
       });
     });
 
-    client.on('data', (data) => {
-      console.log('📥 Получено от TCP-сервера:', data.toString());
+    let fullData = '';
 
-      // Можно обработать полученные данные
-      settingsWindow.webContents.send('read-result', {
-        success: true,
-        data: data.toString()
-      });
-
-      // Закрытие соединения после получения данных
-      client.end();
+    client.on('data', (chunk) => {
+      const str = chunk.toString();
+      console.log('Get data TCP:', str);
+      fullData += str;
     });
+
+
 
     client.on('timeout', () => {
-      console.warn('⏰ Время ожидания истекло');
-      client.destroy(); // Закрытие соединения по тайм-ауту
-      settingsWindow.webContents.send('read-result', {
-        success: false,
-        error: 'Тайм-аут соединения'
-      });
+      console.warn('Waiting time expired');
+      client.destroy();
+      if (fullData.length === 0) {
+        mainWindow.webContents.send('read-result', {
+          success: false,
+          error: 'Connection timeout'
+        });
+      } else {
+        console.warn('data send to read-result:');
+        mainWindow.webContents.send('read-result', {
+          success: true,
+          data: parseModuleData(fullData)
+        });
+      }
+
     });
 
     client.on('error', (err) => {
-      console.error('❌ Ошибка при соединении с TCP сервером:', err.message);
-      settingsWindow.webContents.send('read-result', {
+      console.error('Error connecting to TCP server:', err.message);
+      mainWindow.webContents.send('read-result', {
         success: false,
         error: err.message
       });
     });
 
     client.on('close', () => {
-      console.log('🔒 TCP соединение закрыто');
+      console.log('TCP connection closed');
     });
 
     return;
   } else {
-    console.error('Неизвестный тип подключения:', typeConnect);
+    console.error('Unknown connection type:', connType);
     return;
   }
 
@@ -109,18 +301,17 @@ ipcMain.on('read-module', async () => {
     await new Promise((resolve, reject) => {
       port.open((err) => {
         if (err) return reject(err);
-        console.log('Порт открыт:', portPath);
+        console.log('Port open:', portPath);
         resolve();
       });
     });
 
-    // Отправка данных (пример команды)
     const message = Buffer.from([0x43, 0x4F, 0x4E, 0x46, 0x49, 0x47, 0x52, 0x45, 0x41, 0x44, 0xCF, 0xDB]);
     port.write(message, (err) => {
       if (err) {
-        console.error('Ошибка отправки:', err.message);
+        console.error('Sending error:', err.message);
       } else {
-        console.log('Данные отправлены');
+        console.log('Data sent');
       }
     });
 
@@ -129,13 +320,13 @@ ipcMain.on('read-module', async () => {
 
     await new Promise((resolve) => {
       const timeout = setTimeout(() => {
-        console.warn('Время ожидания истекло');
+        console.warn('Waiting time expired');
         resolve();
       }, timeoutMs);
 
       port.on('data', (data) => {
         receivedData += data.toString(); // или data.toString('hex')
-        console.log('Получено:', data.toString());
+        console.log('Received:', data.toString());
 
         if (receivedData.length >= 10) {
           clearTimeout(timeout);
@@ -146,21 +337,21 @@ ipcMain.on('read-module', async () => {
 
     port.close((err) => {
       if (err) {
-        console.error('Ошибка при закрытии порта:', err.message);
+        console.error('Error close port:', err.message);
       } else {
-        console.log('🔒 Порт закрыт');
+        console.log('Port closed:', portPath);
       }
     });
 
     // Отправка результата в рендер
-    settingsWindow.webContents.send('read-result', {
+    mainWindow.webContents.send('read-result', {
       success: true,
       data: receivedData
     });
 
   } catch (err) {
-    console.error('Ошибка:', err.message);
-    settingsWindow.webContents.send('read-result', {
+    console.error('Error:', err.message);
+    mainWindow.webContents.send('read-result', {
       success: false,
       error: err.message
     });
@@ -168,7 +359,30 @@ ipcMain.on('read-module', async () => {
 
 });
 
+ipcMain.on('save-config-modem', (event, configData) => {
+  const lines = Object.entries(configData)
+    .map(([key, value]) => `${key}=${value}`)
+    .join('\n');
 
+  fs.writeFile(configPathModem, lines, 'utf8', (err) => {
+    if (err) {
+      console.error('Ошибка при сохранении модем-конфига:', err);
+    } else {
+      console.log('Конфиг модема успешно сохранён!');
+    }
+  });
+});
+
+function parseModuleData(raw) {
+  const result = {};
+  raw.split(/\r?\n/).forEach(line => {
+    const [key, val] = line.split('=');
+    if (key && val !== undefined) {
+      result[key.trim()] = val.trim();
+    }
+  });
+  return result;
+}
 
 
 ipcMain.on('write-module', () => {
@@ -180,8 +394,8 @@ ipcMain.on('write-module', () => {
 ipcMain.handle('get-com-ports', async () => {
   console.log('get-com-ports event received');
   try {
-    const ports = await SerialPort.SerialPort.list();
-    console.log('Available COM ports:', ports);
+    const ports = await SerialPort.list();
+
     return ports.map(port => port.path);
   } catch (error) {
     console.error('Ошибка при получении списка COM-портов:', error);
@@ -219,7 +433,7 @@ ipcMain.on('open-settings-window', () => {
 });
 
 function createWindow() {
-  const win = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: isDevMode ? 1800 : 945,
     height: 975,
     webPreferences: {
@@ -229,15 +443,19 @@ function createWindow() {
   });
 
   // if (isDevMode) {
-  // win.webContents.openDevTools();
+  mainWindow.webContents.openDevTools();
   //}
 
-  win.loadFile('index.html');
+  mainWindow.loadFile('index.html');
 
-  win.setMenu(null);
+  mainWindow.setMenu(null);
 
-  ipcMain.handle('get-config', () => {
-    return loadConfig();
+  ipcMain.handle('get-config-modem', () => {
+    return loadConfigModem();
+  });
+
+  ipcMain.handle('get-config-local', () => {
+    return loadConfigLocal();
   });
 
 
