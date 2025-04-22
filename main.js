@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const fs = require('fs');
+const { openPort, createPort, closePort, sendMessage, waitForResponse, waitForResponseWithSilence } = require('./renderer/js/port.js');
 const { loadConfigLocal, loadConfigModem, saveConfigLocal, saveConfigModem, configPathLocal, configPathModem } = require('./renderer/js/modemConfig.js');
 const { SerialPort } = require('serialport');
 const net = require('net');
@@ -9,150 +10,160 @@ const isDevMode = process.env.NODE_ENV === 'development';
 let settingsWindow;
 let mainWindow;
 
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-ipcMain.on('write-module', async (event, connType, msg)  => {
+
+const apn = Buffer.from([0x44, 0x03, 0x41, 0x50, 0x4e]); // пример APN
+const user = Buffer.from([0x44, 0x04, 0x55, 0x53, 0x45, 0x52]); // пример USER
+const pwd = Buffer.from([0x44, 0x03, 0x50, 0x57, 0x44]); // пример PWD
+const opMode = Buffer.from([0x44, 0x07, 0x4f, 0x50, 0x5f, 0x4d, 0x4f, 0x44, 0x45]); // пример OP_MODE
+const portSrv = Buffer.from([0x44, 0x08, 0x50, 0x4f, 0x52, 0x54, 0x5f, 0x53, 0x52, 0x56]); // пример PORT_SRV
+const gsmMode = Buffer.from([0x44, 0x08, 0x47, 0x53, 0x4d, 0x5f, 0x4d, 0x4f, 0x44, 0x45]); // пример GSM_MODE
+const baudrate = Buffer.from([0x44, 0x08, 0x42, 0x41, 0x55, 0x44, 0x52, 0x41, 0x54, 0x45]); // пример BAUDRATE
+const dataSize = Buffer.from([0x44, 0x09, 0x44, 0x41, 0x54, 0x41, 0x5f, 0x53, 0x49, 0x5a, 0x45]); // пример DATA_SIZE
+const stopSize = Buffer.from([0x44, 0x09, 0x53, 0x54, 0x4f, 0x50, 0x5f, 0x53, 0x49, 0x5a, 0x45]); // пример STOP_SIZE
+const parity = Buffer.from([0x44, 0x06, 0x50, 0x41, 0x52, 0x49, 0x54, 0x59]); // пример PARITY
+const baudrate3 = Buffer.from([0x44, 0x09, 0x42, 0x41, 0x55, 0x44, 0x52, 0x41, 0x54, 0x45, 0x33]); // пример BAUDRATE3
+const dataSize3 = Buffer.from([0x44, 0x0a, 0x44, 0x41, 0x54, 0x41, 0x5f, 0x53, 0x49, 0x5a, 0x45, 0x33]); // пример DATA_SIZE3
+const stopSize3 = Buffer.from([0x44, 0x0a, 0x53, 0x54, 0x4f, 0x50, 0x5f, 0x53, 0x49, 0x5a, 0x45, 0x33]); // пример STOP_SIZE3
+const parity3 = Buffer.from([0x44, 0x07, 0x50, 0x41, 0x52, 0x49, 0x54, 0x59, 0x33]); // пример PARITY3
+const toutTcp = Buffer.from([0x44, 0x08, 0x54, 0x4f, 0x55, 0x54, 0x5f, 0x54, 0x43, 0x50]); // пример TOUT_TCP
+const toutReload = Buffer.from([0x44, 0x0b, 0x54, 0x4f, 0x55, 0x54, 0x5f, 0x52, 0x45, 0x4c, 0x4f, 0x41, 0x44]); // пример TOUT_RELOAD
+const toutSim = Buffer.from([0x44, 0x08, 0x54, 0x4f, 0x55, 0x54, 0x5f, 0x53, 0x49, 0x4d]); // пример TOUT_SIM
+const toutNet = Buffer.from([0x44, 0x08, 0x54, 0x4f, 0x55, 0x54, 0x5f, 0x4e, 0x45, 0x54]); // пример TOUT_NET
+const toutSrv = Buffer.from([0x44, 0x08, 0x54, 0x4f, 0x55, 0x54, 0x5f, 0x53, 0x52, 0x56]); // пример TOUT_SRV
+const ftpHost = Buffer.from([0x44, 0x08, 0x46, 0x54, 0x50, 0x5f, 0x48, 0x4f, 0x53, 0x54]); // пример FTP_HOST
+const ftpUser = Buffer.from([0x44, 0x08, 0x46, 0x54, 0x50, 0x5f, 0x55, 0x53, 0x45, 0x52]); // пример FTP_USER
+const ftpPwd = Buffer.from([0x44, 0x07, 0x46, 0x54, 0x50, 0x5f, 0x50, 0x57, 0x44]); // пример FTP_PWD
+const ftpPort = Buffer.from([0x44, 0x08, 0x46, 0x54, 0x50, 0x5f, 0x50, 0x4f, 0x52, 0x54]); // пример FTP_PORT
+const ftpFSize = Buffer.from([0x44, 0x09, 0x46, 0x54, 0x50, 0x5f, 0x46, 0x53, 0x49, 0x5a, 0x45]); // пример FTP_FSIZE
+const rssi = Buffer.from([0x44, 0x04, 0x52, 0x53, 0x53, 0x49]); // пример RSSI
+const devModel = Buffer.from([0x44, 0x09, 0x44, 0x45, 0x56, 0x5f, 0x4d, 0x4f, 0x44, 0x45, 0x4c]); // пример DEV_MODEL
+const hw_ver = Buffer.from([0x44, 0x06, 0x48, 0x57, 0x5f, 0x56, 0x45, 0x52]); // пример HW_VER
+const app_ver = Buffer.from([0x44, 0x07, 0x41, 0x50, 0x50, 0x5f, 0x56, 0x45, 0x52]); // пример APP_VER
+
+ipcMain.on('write-module', async (event, connType, msg) => {
 
   const config = loadConfigLocal();
   connType = parseInt(connType, 10);
 
-  let portPath = '';
-  let portOptions = {};
+  const sendAndReceiveParam = async (port, label, msg2) => {
+    const msg1 = Buffer.from([0x00, 0x03, 0x45, 0x41, 0x53, 0x59, 0xc9, 0xfd]);
+    const expectedResp1 = Buffer.from([0x00, 0x03, 0x45, 0x00, 0xb4, 0xc2]);
+
+    await sendMessage(port, msg1, `${label} - prefix`);
+
+    const resp1 = await waitForResponse(
+      port,
+      (data) =>
+        data.length >= expectedResp1.length &&
+        data.slice(0, expectedResp1.length).equals(expectedResp1),
+      5000,
+      `${label} - response prefix`
+    );
+
+    console.log(`[${label}] Prefix OK:`, resp1.toString('hex'));
+
+    await sleep(200);
+
+    await sendMessage(port, msg2, `${label} - message 2`);
+
+    const resp2 = await waitForResponseWithSilence(port, 150, 3000, `${label} response`);
+
+    console.log(`[${label}] Response OK:`, resp2.toString());
+
+    mainWindow.webContents.send('write-result', {
+      success: true,
+      label,
+      data: resp2.toString()
+    });
+  };
 
   if (connType === 1) {
-    
-    portPath = config.comPortOpto;
-    portOptions = {
-      baudRate: parseInt(config.baudRateOpto, 10),
-      dataBits: parseInt(config.dataBitsOpto, 10),
-      stopBits: parseInt(config.stopBitsOpto, 10),
-      parity: config.parityOpto
-    };
 
-    const port = new SerialPort({ path: portPath, ...portOptions, autoOpen: false });
+    const { port } = createPort(config, connType);
 
     try {
-      await new Promise((resolve, reject) => {
-        port.open((err) => {
-          if (err) return reject(err);
-          console.log('Port open:', portPath);
-          resolve();
-        });
-      });
+      await openPort(port);
 
-      const message1 = Buffer.from([0x00, 0x03, 0x45, 0x41, 0x53, 0x59, 0xc9, 0xfd]);
-      port.write(message1, (err) => {
-        if (err) {
-          console.error('Sending error:', err.message);
-        } else {
-          console.log('Data sent');
+      const lines = msg.trim().split('\n');
+      for (const line of lines) {
+        const [id, value] = line.split('=');
+
+        if (!id || !value) continue; // пропуск пустых или кривых строк
+
+        try {
+          await sendAndReceiveParam(port, id, line, () => true); // line = `${id}=${value}`
+        } catch (err) {
+          console.error('Error during sequential message exchange:', err.message);
+          mainWindow.webContents.send('write-result', {
+            success: false,
+            error: err.message
+          });
+          break;  
         }
-      });
-
-      let receivedData = '';
-      const timeoutMs = 5000;
-
-      const response1 = await new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          console.warn('Waiting time expired for message 1');
-          reject(new Error('Timeout waiting for message 1'));
-        }, timeoutMs);
-
-        port.on('data', (data) => {
-          receivedData = Buffer.concat([receivedData, data]); 
-          console.log('Received data:', data.toString('hex'));
-
-          const expectedResponse = Buffer.from([0x00, 0x03, 0x45, 0x00, 0xb4, 0xc2]);
-          if (receivedData.length >= expectedResponse.length && receivedData.slice(0, expectedResponse.length).equals(expectedResponse)) {
-            clearTimeout(timeout);
-            resolve(receivedData); 
-          }
-        });
-      });
-
-      console.log('Response to message 1:', receivedData.toString('hex'));
-
-      const prefxix = "CONFIGWRITE\n"
-      const message2 = prefxix + msg;
-
-      port.write(message2, (err) => {
-        if (err) {
-          console.error('Sending error for message 2:', err.message);
-        } else {
-          console.log('Message 2 sent');
-        }
-      });
-
-      const response2 = await new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          console.warn('Waiting time expired for message 2');
-          reject(new Error('Timeout waiting for message 2'));
-        }, timeoutMs);
-
-        port.on('data', (data) => {
-          receivedData += data.toString();
-          console.log('Received data for message 2:', data.toString());
-
-          if (receivedData.length >= 10) {
-            clearTimeout(timeout);
-            resolve(receivedData);
-          }
-        });
-      });
-
-      console.log('Response to message 2:', receivedData);
-
-      port.close((err) => {
-        if (err) {
-          console.error('Error close port:', err.message);
-        } else {
-          console.log('Port closed:', portPath);
-        }
-      });
-
-      mainWindow.webContents.send('write-result', {
-        success: true,
-        data: receivedData
-      });
-
+      }
+      await closePort(port);
     } catch (err) {
-      console.error('Error:', err.message);
+      console.error('Error during sequential message exchange:', err.message);
       mainWindow.webContents.send('write-result', {
         success: false,
         error: err.message
       });
+
+      if (port.isOpen) {
+        port.close(() => console.log('Port closed after error'));
+      }
     }
     return;
   } else if (connType === 2) {
-    portPath = config.comPortUsb;
-    portOptions = {
-      baudRate: parseInt(config.baudRateUsb, 10),
-      dataBits: parseInt(config.dataBitsUsb, 10),
-      stopBits: parseInt(config.stopBitsUsb, 10),
-      parity: config.parityUsb
-    };
+
+    const { port } = createPort(config, connType);
+
   } else if (connType === 3) {
-    portPath = config.comPortRf;
-    portOptions = {
-      baudRate: parseInt(config.baudRateRf, 10),
-      dataBits: parseInt(config.dataBitsRf, 10),
-      stopBits: parseInt(config.stopBitsRf, 10),
-      parity: config.parityRf
-    };
+
+    const { port } = createPort(config, connType);
+
+    try {
+      await openPort(port);
+      
+      const lines = msg.trim().split('\n');
+      for (const line of lines) {
+        const [id, value] = line.split('=');
+
+        if (!id || !value) continue; // пропуск пустых или кривых строк
+
+        try {
+          await sendAndReceiveParam(port, id, line, () => true); // line = `${id}=${value}`
+        } catch (err) {
+          console.error('Error during sequential message exchange:', err.message);
+          mainWindow.webContents.send('write-result', {
+            success: false,
+            error: err.message
+          });
+          break;  
+        }
+      }
+      await closePort(port);
+    } catch (err) {
+      console.error('Error during sequential message exchange:', err.message);
+      mainWindow.webContents.send('write-result', {
+        success: false,
+        error: err.message
+      });
+
+      if (port.isOpen) {
+        port.close(() => console.log('Port closed after error'));
+      }
+    }
+    return;
+
   } else if (connType === 4) {
-    portPath = config.comPortTcp;
-    portOptions = {
-      host: config.ipTcp,
-      port: config.portTcp,
-      timeout: 2000
-    };
 
-    const client = new net.Socket();
+    const { client, portOptions } = createPort(config, connType);
 
-    client.setTimeout(tcpOptions.timeout);
-
-
-    client.connect(tcpOptions.port, tcpOptions.host, () => {
-      console.log(`Connect to ${tcpOptions.host}:${tcpOptions.port}`);
+    client.connect(portOptions.port, portOptions.host, () => {
+      console.log(`Connect to ${portOptions.host}:${portOptions.port}`);
 
       const prefxix = "CONFIGWRITE\n"
 
@@ -193,234 +204,151 @@ ipcMain.on('read-module', async (event, connType) => {
 
   connType = parseInt(connType, 10);
 
-  let portPath = '';
-  let portOptions = {};
+  const sendAndReceiveParam = async (port, label, msg2) => {
+    const msg1 = Buffer.from([0x00, 0x03, 0x45, 0x41, 0x53, 0x59, 0xc9, 0xfd]);
+    const expectedResp1 = Buffer.from([0x00, 0x03, 0x45, 0x00, 0xb4, 0xc2]);
+
+    await sendMessage(port, msg1, `${label} - prefix`);
+
+    const resp1 = await waitForResponse(
+      port,
+      (data) =>
+        data.length >= expectedResp1.length &&
+        data.slice(0, expectedResp1.length).equals(expectedResp1),
+      5000,
+      `${label} - response prefix`
+    );
+
+    console.log(`[${label}] Prefix OK:`, resp1.toString('hex'));
+
+    await sleep(200);
+
+    await sendMessage(port, msg2, `${label} - message 2`);
+
+    const resp2 = await waitForResponseWithSilence(port, 150, 3000, `${label} response`);
+
+    console.log(`[${label}] Response OK:`, resp2.toString());
+
+    mainWindow.webContents.send('read-result', {
+      success: true,
+      label,
+      data: resp2.toString()
+    });
+  };
 
   if (connType === 1) {
-    portPath = config.comPortOpto;
-    portOptions = {
-      baudRate: parseInt(config.baudRateOpto, 10),
-      dataBits: parseInt(config.dataBitsOpto, 10),
-      stopBits: parseInt(config.stopBitsOpto, 10),
-      parity: config.parityOpto
-    };
 
-    const port = new SerialPort({ path: portPath, ...portOptions, autoOpen: false });
+    const { port } = createPort(config, connType);
 
     try {
-      await new Promise((resolve, reject) => {
-        port.open((err) => {
-          if (err) return reject(err);
-          console.log('Port open:', portPath);
-          resolve();
-        });
-      });
+      await openPort(port);
 
-      const message1 = Buffer.from([0x00, 0x03, 0x45, 0x41, 0x53, 0x59, 0xc9, 0xfd]);
-      port.write(message1, (err) => {
-        if (err) {
-          console.error('Sending error:', err.message);
-        } else {
-          console.log('Data sent');
-        }
-      });
+      await sendAndReceiveParam(port, 'APN', apn, () => true);
+      await sendAndReceiveParam(port, 'USER', user, () => true);
+      await sendAndReceiveParam(port, 'PWD', pwd, () => true);
+      await sendAndReceiveParam(port, 'OP_MODE', opMode, () => true);
+      await sendAndReceiveParam(port, 'PORT_SRV', portSrv, () => true);
+      await sendAndReceiveParam(port, 'GSM_MODE', gsmMode, () => true);
+      await sendAndReceiveParam(port, 'BAUDRATE', baudrate, () => true);
+      await sendAndReceiveParam(port, 'DATA_SIZE', dataSize, () => true);
+      await sendAndReceiveParam(port, 'STOP_SIZE', stopSize, () => true);
+      await sendAndReceiveParam(port, 'PARITY', parity, () => true);
+      await sendAndReceiveParam(port, 'BAUDRATE3', baudrate3, () => true);
+      await sendAndReceiveParam(port, 'DATA_SIZE3', dataSize3, () => true);
+      await sendAndReceiveParam(port, 'STOP_SIZE3', stopSize3, () => true);
+      await sendAndReceiveParam(port, 'PARITY3', parity3, () => true);
+      await sendAndReceiveParam(port, 'TOUT_TCP', toutTcp, () => true);
+      await sendAndReceiveParam(port, 'TOUT_RELOAD', toutReload, () => true);
+      await sendAndReceiveParam(port, 'TOUT_SIM', toutSim, () => true);
+      await sendAndReceiveParam(port, 'TOUT_NET', toutNet, () => true);
+      await sendAndReceiveParam(port, 'TOUT_SRV', toutSrv, () => true);
+      await sendAndReceiveParam(port, 'FTP_HOST', ftpHost, () => true);
+      await sendAndReceiveParam(port, 'FTP_USER', ftpUser, () => true);
+      await sendAndReceiveParam(port, 'FTP_PWD', ftpPwd, () => true);
+      await sendAndReceiveParam(port, 'FTP_PORT', ftpPort, () => true);
+      await sendAndReceiveParam(port, 'FTP_FSIZE', ftpFSize, () => true);
+      await sendAndReceiveParam(port, 'RSSI', rssi, () => true);
+      await sendAndReceiveParam(port, 'DEV_MODEL', devModel, () => true);
+      await sendAndReceiveParam(port, 'HW_VER', hw_ver, () => true);
+      await sendAndReceiveParam(port, 'APP_VER', app_ver, () => true);
 
-      let receivedData = '';
-      const timeoutMs = 5000;
 
-      const response1 = await new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          console.warn('Waiting time expired for message 1');
-          reject(new Error('Timeout waiting for message 1'));
-        }, timeoutMs);
-
-        port.on('data', (data) => {
-          receivedData = Buffer.concat([receivedData, data]); 
-          console.log('Received data:', data.toString('hex'));
-
-          const expectedResponse = Buffer.from([0x00, 0x03, 0x45, 0x00, 0xb4, 0xc2]);
-          if (receivedData.length >= expectedResponse.length && receivedData.slice(0, expectedResponse.length).equals(expectedResponse)) {
-            clearTimeout(timeout);
-            resolve(receivedData); 
-          }
-        });
-      });
-
-      console.log('Response to message 1:', receivedData.toString('hex'));
-
-      const message2 = Buffer.from([0x43, 0x4F, 0x4E, 0x46, 0x49, 0x47, 0x52, 0x45, 0x41, 0x44, 0xCF, 0xDB]);
-      port.write(message2, (err) => {
-        if (err) {
-          console.error('Sending error for message 2:', err.message);
-        } else {
-          console.log('Message 2 sent');
-        }
-      });
-
-      const response2 = await new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          console.warn('Waiting time expired for message 2');
-          reject(new Error('Timeout waiting for message 2'));
-        }, timeoutMs);
-
-        port.on('data', (data) => {
-          receivedData += data.toString();
-          console.log('Received data for message 2:', data.toString());
-
-          if (receivedData.length >= 10) {
-            clearTimeout(timeout);
-            resolve(receivedData);
-          }
-        });
-      });
-
-      console.log('Response to message 2:', receivedData);
-
-      port.close((err) => {
-        if (err) {
-          console.error('Error close port:', err.message);
-        } else {
-          console.log('Port closed:', portPath);
-        }
-      });
-
-      mainWindow.webContents.send('read-result', {
-        success: true,
-        data: receivedData
-      });
-
+      await closePort(port);
     } catch (err) {
-      console.error('Error:', err.message);
+      console.error('Error during sequential message exchange:', err.message);
       mainWindow.webContents.send('read-result', {
         success: false,
         error: err.message
       });
+
+      if (port.isOpen) {
+        port.close(() => console.log('Port closed after error'));
+      }
     }
     return;
   }
   else if (connType === 2) {
-    portPath = config.comPortUsb;
-    portOptions = {
-      baudRate: parseInt(config.baudRateUsb, 10),
-      dataBits: parseInt(config.dataBitsUsb, 10),
-      stopBits: parseInt(config.stopBitsUsb, 10),
-      parity: config.parityUsb
-    };
+
+    const { port } = createPort(config, connType);
+
   }
   else if (connType === 3) {
-    portPath = config.comPortRf;
-    portOptions = {
-      baudRate: parseInt(config.baudRateRf, 10),
-      dataBits: parseInt(config.dataBitsRf, 10),
-      stopBits: parseInt(config.stopBitsRf, 10),
-      parity: config.parityRf
-    };
-    const port = new SerialPort({ path: portPath, ...portOptions, autoOpen: false });
+
+    const { port } = createPort(config, connType);
 
     try {
-      await new Promise((resolve, reject) => {
-        port.open((err) => {
-          if (err) return reject(err);
-          console.log('Port open:', portPath);
-          resolve();
-        });
-      });
+      await openPort(port);
 
-      const message1 = Buffer.from([0x00, 0x03, 0x45, 0x41, 0x53, 0x59, 0xc9, 0xfd]);
-      port.write(message1, (err) => {
-        if (err) {
-          console.error('Sending error:', err.message);
-        } else {
-          console.log('Data sent');
-        }
-      });
+      await sendAndReceiveParam(port, 'APN', apn, () => true);
+      await sendAndReceiveParam(port, 'USER', user, () => true);
+      await sendAndReceiveParam(port, 'PWD', pwd, () => true);
+      await sendAndReceiveParam(port, 'OP_MODE', opMode, () => true);
+      await sendAndReceiveParam(port, 'PORT_SRV', portSrv, () => true);
+      await sendAndReceiveParam(port, 'GSM_MODE', gsmMode, () => true);
+      await sendAndReceiveParam(port, 'BAUDRATE', baudrate, () => true);
+      await sendAndReceiveParam(port, 'DATA_SIZE', dataSize, () => true);
+      await sendAndReceiveParam(port, 'STOP_SIZE', stopSize, () => true);
+      await sendAndReceiveParam(port, 'PARITY', parity, () => true);
+      await sendAndReceiveParam(port, 'BAUDRATE3', baudrate3, () => true);
+      await sendAndReceiveParam(port, 'DATA_SIZE3', dataSize3, () => true);
+      await sendAndReceiveParam(port, 'STOP_SIZE3', stopSize3, () => true);
+      await sendAndReceiveParam(port, 'PARITY3', parity3, () => true);
+      await sendAndReceiveParam(port, 'TOUT_TCP', toutTcp, () => true);
+      await sendAndReceiveParam(port, 'TOUT_RELOAD', toutReload, () => true);
+      await sendAndReceiveParam(port, 'TOUT_SIM', toutSim, () => true);
+      await sendAndReceiveParam(port, 'TOUT_NET', toutNet, () => true);
+      await sendAndReceiveParam(port, 'TOUT_SRV', toutSrv, () => true);
+      await sendAndReceiveParam(port, 'FTP_HOST', ftpHost, () => true);
+      await sendAndReceiveParam(port, 'FTP_USER', ftpUser, () => true);
+      await sendAndReceiveParam(port, 'FTP_PWD', ftpPwd, () => true);
+      await sendAndReceiveParam(port, 'FTP_PORT', ftpPort, () => true);
+      await sendAndReceiveParam(port, 'FTP_FSIZE', ftpFSize, () => true);
+      await sendAndReceiveParam(port, 'RSSI', rssi, () => true);
+      await sendAndReceiveParam(port, 'DEV_MODEL', devModel, () => true);
+      await sendAndReceiveParam(port, 'HW_VER', hw_ver, () => true);
+      await sendAndReceiveParam(port, 'APP_VER', app_ver, () => true);
 
-      let receivedData = Buffer.alloc(0);
-      const timeoutMs = 5000;
 
-      const response1 = await new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          console.warn('Waiting time expired for message 1');
-          reject(new Error('Timeout waiting for message 1'));
-        }, timeoutMs);
-
-        port.on('data', (data) => {
-          receivedData = Buffer.concat([receivedData, data]); 
-          console.log('Received data:', data.toString('hex'));
-
-          const expectedResponse = Buffer.from([0x00, 0x03, 0x45, 0x00, 0xb4, 0xc2]);
-          if (receivedData.length >= expectedResponse.length && receivedData.slice(0, expectedResponse.length).equals(expectedResponse)) {
-            clearTimeout(timeout);
-            resolve(receivedData); 
-          }
-        });
-      });
-
-      console.log('Response to message 1:', receivedData.toString('hex'));
-
-      const message2 = Buffer.from([0x43, 0x4F, 0x4E, 0x46, 0x49, 0x47, 0x52, 0x45, 0x41, 0x44, 0xCF, 0xDB]);
-      port.write(message2, (err) => {
-        if (err) {
-          console.error('Sending error for message 2:', err.message);
-        } else {
-          console.log('Message 2 sent');
-        }
-      });
-
-      const response2 = await new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          console.warn('Waiting time expired for message 2');
-          reject(new Error('Timeout waiting for message 2'));
-        }, timeoutMs);
-
-        port.on('data', (data) => {
-          receivedData += data.toString();
-          console.log('Received data for message 2:', data.toString());
-
-          // if (receivedData.length >= 10) {
-          //   clearTimeout(timeout);
-          //   resolve(receivedData);
-          // }
-        });
-      });
-
-      console.log('Response to message 2:', receivedData);
-
-      port.close((err) => {
-        if (err) {
-          console.error('Error close port:', err.message);
-        } else {
-          console.log('Port closed:', portPath);
-        }
-      });
-
-      mainWindow.webContents.send('read-result', {
-        success: true,
-        data: receivedData
-      });
-
+      await closePort(port);
     } catch (err) {
-      console.error('Error:', err.message);
+      console.error('Error during sequential message exchange:', err.message);
       mainWindow.webContents.send('read-result', {
         success: false,
         error: err.message
       });
+
+      if (port.isOpen) {
+        port.close(() => console.log('Port closed after error'));
+      }
     }
+
     return;
   } else if (connType === 4) {
-    const tcpOptions = {
-      host: config.ipTcp,
-      port: config.portTcp,
-      timeout: 2000
-    };
 
-    const client = new net.Socket();
+    const { client, portOptions } = createPort(config, connType);
 
-    client.setTimeout(tcpOptions.timeout);
-
-
-    client.connect(tcpOptions.port, tcpOptions.host, () => {
-      console.log(`Connect to ${tcpOptions.host}:${tcpOptions.port}`);
+    client.connect(portOptions.port, portOptions.host, () => {
+      console.log(`Connect to ${portOptions.host}:${portOptions.port}`);
 
       const message = Buffer.from([0x43, 0x4F, 0x4E, 0x46, 0x49, 0x47, 0x52, 0x45, 0x41, 0x44, 0xCF, 0xDB]);
       client.write(message, () => {
@@ -435,8 +363,6 @@ ipcMain.on('read-module', async (event, connType) => {
       console.log('Get data TCP:', str);
       fullData += str;
     });
-
-
 
     client.on('timeout', () => {
       console.warn('Waiting time expired');
@@ -539,11 +465,29 @@ ipcMain.on('read-module', async (event, connType) => {
 });
 
 ipcMain.on('save-config-modem', (event, configData) => {
-  const lines = Object.entries(configData)
+  let currentConfig = {};
+
+  if (fs.existsSync(configPathModem)) {
+    const content = fs.readFileSync(configPathModem, 'utf8');
+    const lines = content.split('\n');
+    for (const line of lines) {
+      const [key, value] = line.split('=');
+      if (key && value !== undefined) {
+        currentConfig[key.trim()] = value.trim();
+      }
+    }
+  }
+
+  for (const [key, value] of Object.entries(configData)) {
+    currentConfig[key] = value;
+  }
+
+
+  const updatedLines = Object.entries(currentConfig)
     .map(([key, value]) => `${key}=${value}`)
     .join('\n');
 
-  fs.writeFile(configPathModem, lines, 'utf8', (err) => {
+  fs.writeFile(configPathModem, updatedLines, 'utf8', (err) => {
     if (err) {
       console.error('Ошибка при сохранении модем-конфига:', err);
     } else {
@@ -563,12 +507,6 @@ function parseModuleData(raw) {
   return result;
 }
 
-
-ipcMain.on('write-module', () => {
-  saveConfig();
-  // Здесь вы можете обработать данные, полученные из рендерера
-  // Например, отправить их обратно в рендерер или выполнить другие действия
-});
 
 ipcMain.handle('get-com-ports', async () => {
   console.log('get-com-ports event received');

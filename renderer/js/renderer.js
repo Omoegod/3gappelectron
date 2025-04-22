@@ -49,16 +49,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     ipcRenderer.on('read-result', (event, result) => {
         if (result.success) {
-            const data = result.data;
-            console.log('Данные успешно прочитаны:', data);
-            Object.keys(data).forEach(key => {
-                const el = document.getElementById(key);
-                if (el) {
-                    el.value = data[key];
-                } else {
-                    console.warn(`Поле с id "${key}" не найдено`);
-                }
-            });
+            const rawLine = result.data;
+            const [key, value] = rawLine.split('=').map(s => s.trim());
+            console.log('Данные успешно прочитаны:', rawLine);
 
             const neededKeys = [
                 'APN', 'USER', 'PWD', 'OP_MODE', 'PORT_SRV',
@@ -67,13 +60,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 'TOUT_TCP', 'TOUT_RELOAD', 'TOUT_SIM', 'TOUT_NET', 'TOUT_SRV',
                 'FTP_HOST', 'FTP_USER', 'FTP_PWD', 'FTP_PORT', 'FTP_FSIZE'
             ];
-            const filteredData = {};
-            for (const key of neededKeys) {
-                if (key in data) {
-                    filteredData[key] = data[key];
-                }
-            }
-            ipcRenderer.send('save-config-modem', filteredData); // Сохраняем данные в файл
+            
+            if (neededKeys.includes(key)) {
+                const filteredData = { [key]: value };  
+                ipcRenderer.send('save-config-modem', filteredData);
+              }
+
+            document.getElementById(key).value = value;   
+            
         } else {
             console.error('Ошибка при чтении:', result.error);
         }
@@ -88,9 +82,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const selectedType = document.getElementById('connType').value;
 
             const configString = collectConfigFromHtml();
-            
+
             ipcRenderer.send('write-module', selectedType, configString);
-            
+
         });
     }
 });
@@ -98,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function collectConfigFromHtml() {
     const ids = [
-        'APN', 'USER', 'PWD', 'OP_MODE', 'GSM_MODE', 
+        'APN', 'USER', 'PWD', 'OP_MODE', 'GSM_MODE',
         'PORT_SRV', 'BAUDRATE', 'DATA_SIZE', 'STOP_SIZE', 'PARITY',
         'BAUDRATE3', 'DATA_SIZE3', 'STOP_SIZE3', 'PARITY3',
         'TOUT_TCP', 'TOUT_RELOAD', 'TOUT_SIM', 'TOUT_NET', 'TOUT_SRV'
