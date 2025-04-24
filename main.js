@@ -90,9 +90,15 @@ ipcMain.on('write-module', async (event, connType, msg) => {
       for (const line of lines) {
         const [id, value] = line.split('=');
 
-        if (!id || !value) continue; // пропуск пустых или кривых строк
+        if (!id || !value) continue; 
 
-        const packet = "D*" + line;
+        const payload = Buffer.from(line, "utf-8");
+        const packet = Buffer.concat([
+          Buffer.from([0x44, 0x2A]),            // Start byte (0x2A)
+          Buffer.from([payload.length]),  // Length
+          payload                         // Actual data
+        ]);
+
         try {
           await sendAndReceiveParam(port, id, packet, () => true); // line = `${id}=${value}`
         } catch (err) {
@@ -103,6 +109,20 @@ ipcMain.on('write-module', async (event, connType, msg) => {
           });
           break;
         }
+      }
+
+      const accept = Buffer.from([0x44, 0x2B, 0x00, 0x00]);
+      const acceptId = "accept"
+
+      try {
+        await sendAndReceiveParam(port, acceptId, accept, () => true);
+      }
+      catch (err) {
+        console.error('Error during sequential message exchange:', err.message);
+        mainWindow.webContents.send('write-result', {
+          success: false,
+          error: err.message
+        });
       }
       await closePort(port);
     } catch (err) {
@@ -132,9 +152,8 @@ ipcMain.on('write-module', async (event, connType, msg) => {
       for (const line of lines) {
         const [id, value] = line.split('=');
 
-        if (!id || !value) continue; // пропуск пустых или кривых строк
+        if (!id || !value) continue; 
 
-        // const packet = "D*" + line; 
         const payload = Buffer.from(line, "utf-8");
         const packet = Buffer.concat([
           Buffer.from([0x44, 0x2A]),            // Start byte (0x2A)
@@ -310,6 +329,7 @@ ipcMain.on('read-module', async (event, connType) => {
         port.close(() => console.log('Port closed after error'));
       }
     }
+
     return;
   }
   else if (connType === 2) {
