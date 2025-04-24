@@ -64,7 +64,7 @@ ipcMain.on('write-module', async (event, connType, msg) => {
 
     console.log(`[${label}] Prefix OK:`, resp1.toString('hex'));
 
-    await sleep(200);
+    await sleep(100);
 
     await sendMessage(port, msg2, `${label} - message 2`);
 
@@ -92,15 +92,16 @@ ipcMain.on('write-module', async (event, connType, msg) => {
 
         if (!id || !value) continue; // пропуск пустых или кривых строк
 
+        const packet = "D*" + line;
         try {
-          await sendAndReceiveParam(port, id, line, () => true); // line = `${id}=${value}`
+          await sendAndReceiveParam(port, id, packet, () => true); // line = `${id}=${value}`
         } catch (err) {
           console.error('Error during sequential message exchange:', err.message);
           mainWindow.webContents.send('write-result', {
             success: false,
             error: err.message
           });
-          break;  
+          break;
         }
       }
       await closePort(port);
@@ -126,23 +127,47 @@ ipcMain.on('write-module', async (event, connType, msg) => {
 
     try {
       await openPort(port);
-      
+
       const lines = msg.trim().split('\n');
       for (const line of lines) {
         const [id, value] = line.split('=');
 
         if (!id || !value) continue; // пропуск пустых или кривых строк
 
+        // const packet = "D*" + line; 
+        const payload = Buffer.from(line, "utf-8");
+        const packet = Buffer.concat([
+          Buffer.from([0x44, 0x2A]),            // Start byte (0x2A)
+          Buffer.from([payload.length]),  // Length
+          payload                         // Actual data
+        ]);
+
+        
+
         try {
-          await sendAndReceiveParam(port, id, line, () => true); // line = `${id}=${value}`
+          await sendAndReceiveParam(port, id, packet, () => true); // line = `${id}=${value}`
         } catch (err) {
           console.error('Error during sequential message exchange:', err.message);
           mainWindow.webContents.send('write-result', {
             success: false,
             error: err.message
           });
-          break;  
+          break;
         }
+      }
+
+      const accept = Buffer.from([0x44, 0x2B, 0x00, 0x00]);
+      const acceptId = "accept"
+
+      try {
+        await sendAndReceiveParam(port, acceptId, accept, () => true);
+      }
+      catch (err) {
+        console.error('Error during sequential message exchange:', err.message);
+        mainWindow.webContents.send('write-result', {
+          success: false,
+          error: err.message
+        });
       }
       await closePort(port);
     } catch (err) {
