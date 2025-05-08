@@ -15,7 +15,7 @@
         <button id="btn2">Запись</button>
         <button id="btn3">Сохранить</button>
         <button id="btn4">Сохранить как</button>
-        <button id="btn5">Загрузить</button>
+        <!-- <button id="btn5">Загрузить</button> -->
         <button id="btn6">Настройки</button>
       </div>
     </div>
@@ -150,26 +150,46 @@
       </div>
 
       <div class="timeoutSettings">
-        <p>Настройки таймаута</p>
+        <p>Настройки таймаутов</p>
         <div class="wrap">
           <p>Таймаут ожидания ответа</p>
-          <input type="text" id="TOUT_TCP" />
+          <select id="TOUT_TCP">
+            <option value="30">30 сек</option>
+            <option value="60">1 мин</option>
+            <option value="120">3 мин</option>
+          </select>
         </div>
         <div class="wrap">
           <p>Перезагрузка модуля</p>
-          <input type="text" id="TOUT_RELOAD" />
+          <select id="TOUT_RELOAD">
+            <option value="43200">12 часов</option>
+            <option value="86400">1 день</option>
+            <option value="604800">1 неделя</option>
+          </select>
         </div>
         <div class="wrap">
           <p>Таймаут SIM</p>
-          <input type="text" id="TOUT_SIM" />
+          <select id="TOUT_SIM">
+            <option value="60000">1 мин</option>
+            <option value="180000">3 мин</option>
+            <option value="300000">5 мин</option>
+          </select>
         </div>
         <div class="wrap">
           <p>Таймаут GPRS</p>
-          <input type="text" id="TOUT_NET" />
+          <select id="TOUT_NET">
+            <option value="60000">1 мин</option>
+            <option value="180000">3 мин</option>
+            <option value="300000">5 мин</option>
+          </select>
         </div>
         <div class="wrap">
           <p>Таймаут TCP</p>
-          <input type="text" id="TOUT_SRV" />
+          <select id="TOUT_SRV">
+            <option value="60000">1 мин</option>
+            <option value="180000">3 мин</option>
+            <option value="300000">5 мин</option>
+          </select>
         </div>
       </div>
     </div>

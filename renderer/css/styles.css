@@ -67,6 +67,7 @@ button:active {
     align-items: center;
     justify-content: flex-start;
     padding: 0 20px;
+    margin-bottom: 10px;
     gap: 30px;
     background: #e9ecef;
     border-radius: 8px;
@@ -226,9 +227,7 @@ select:focus, input[type="text"]:focus, input[type="password"]:focus {
     border-color: #007bff;
 }
 
-.GPRSsettings input[type="text"], .GPRSsettings input[type="password"] {
-    margin-bottom: 10px;
-}
+
 
 .wrap {
     margin-bottom: 10px;

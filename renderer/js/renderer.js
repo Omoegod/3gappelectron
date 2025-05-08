@@ -1,5 +1,23 @@
 const { ipcRenderer, ipcMain } = require('electron');
 
+function updateRSSIColor(value) {
+    const rssiElement = document.getElementById('RSSI');
+
+    if (!rssiElement) {
+        console.error('Элемент с ID "RSSI" не найден.');
+        return;
+    }
+
+    if (value <= 70) {
+        rssiElement.style.backgroundColor = "lightgreen"; 
+    } else if (value > 70 && value <= 85) {
+        rssiElement.style.backgroundColor = "lightsalmon"; 
+    } else {
+        rssiElement.style.backgroundColor = "lightcoral"; 
+    }
+}
+
+
 document.addEventListener('DOMContentLoaded', async () => {
     try {
         const configModem = await ipcRenderer.invoke('get-config-modem');
@@ -33,7 +51,81 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
+document.addEventListener('DOMContentLoaded', () => {
+    const saveButton = document.getElementById('btn3');
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabContents = document.querySelectorAll('.tab-content');
+    if (saveButton) {
+        saveButton.addEventListener('click', () => {
+            const collectedData = {};
 
+            tabButtons.forEach((button, index) => {
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(content => content.classList.remove('active'));
+                button.classList.add('active');
+                tabContents[index].classList.add('active');
+
+                const inputs = tabContents[index].querySelectorAll('input, select');
+                inputs.forEach(input => {
+                    collectedData[input.id] = input.value;
+                });
+            });
+
+            const otherInputs = document.querySelectorAll('input:not(.tab-content input), select:not(.tab-content select)');
+            otherInputs.forEach(input => {
+                collectedData[input.id] = input.value;
+            });
+
+            console.log('Collected Data:', collectedData);
+
+            ipcRenderer.send('save-config-modem', collectedData);
+        });
+    } else {
+        console.error('Кнопка с ID "btn3" не найдена.');
+    }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    const saveButton = document.getElementById('btn4');
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabContents = document.querySelectorAll('.tab-content');
+    if (saveButton) {
+        saveButton.addEventListener('click', () => {
+            const collectedData = {};
+
+            tabButtons.forEach((button, index) => {
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(content => content.classList.remove('active'));
+                button.classList.add('active');
+                tabContents[index].classList.add('active');
+
+                const inputs = tabContents[index].querySelectorAll('input, select');
+                inputs.forEach(input => {
+                    collectedData[input.id] = input.value;
+                });
+            });
+
+            const otherInputs = document.querySelectorAll('input:not(.tab-content input), select:not(.tab-content select)');
+            otherInputs.forEach(input => {
+                collectedData[input.id] = input.value;
+            });
+
+            console.log('Collected Data:', collectedData);
+
+            ipcRenderer.send('save-file-config-modem', collectedData);
+
+            ipcRenderer.on('save-file-config-modem-result', (event, result) => {
+                if (result.success) {
+                    console.log('Файл успешно сохранён:', result.filePath);
+                } else {
+                    console.error('Ошибка при сохранении файла:', result.error);
+                }
+            });
+        });
+    } else {
+        console.error('Кнопка с ID "btn4" не найдена.');
+    }
+});
 
 document.addEventListener('DOMContentLoaded', () => {
     const readButton = document.getElementById('btn1');
@@ -60,14 +152,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 'TOUT_TCP', 'TOUT_RELOAD', 'TOUT_SIM', 'TOUT_NET', 'TOUT_SRV',
                 'FTP_HOST', 'FTP_USER', 'FTP_PWD', 'FTP_PORT', 'FTP_FSIZE'
             ];
-            
-            if (neededKeys.includes(key)) {
-                const filteredData = { [key]: value };  
-                ipcRenderer.send('save-config-modem', filteredData);
-              }
 
-            document.getElementById(key).value = value;   
-            
+            if (neededKeys.includes(key)) {
+                const filteredData = { [key]: value };
+                ipcRenderer.send('save-config-modem', filteredData);
+            }
+
+            document.getElementById(key).value = value;
+
+            if (key === 'RSSI') {
+                updateRSSIColor(value);
+            }
+
         } else {
             console.error('Ошибка при чтении:', result.error);
         }

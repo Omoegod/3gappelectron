@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const fs = require('fs');
 const { openPort, createPort, closePort, sendMessage, waitForResponse, waitForResponseWithSilence } = require('./renderer/js/port.js');
 const { loadConfigLocal, loadConfigModem, saveConfigLocal, saveConfigModem, configPathLocal, configPathModem } = require('./renderer/js/modemConfig.js');
@@ -489,11 +489,16 @@ ipcMain.on('read-module', async (event, connType) => {
 
 });
 
-ipcMain.on('save-config-modem', (event, configData) => {
-  let currentConfig = {};
+ipcMain.on('close-settings-window', () => {
+  if (settingsWindow) {
+      settingsWindow.close(); 
+  }
+});
 
-  if (fs.existsSync(configPathModem)) {
-    const content = fs.readFileSync(configPathModem, 'utf8');
+ipcMain.on('save-config-local', (event, configData) => {
+  let currentConfig = {};
+  if (fs.existsSync(configPathLocal)) {
+    const content = fs.readFileSync(configPathLocal, 'utf8');
     const lines = content.split('\n');
     for (const line of lines) {
       const [key, value] = line.split('=');
@@ -512,7 +517,7 @@ ipcMain.on('save-config-modem', (event, configData) => {
     .map(([key, value]) => `${key}=${value}`)
     .join('\n');
 
-  fs.writeFile(configPathModem, updatedLines, 'utf8', (err) => {
+  fs.writeFile(configPathLocal, updatedLines, 'utf8', (err) => {
     if (err) {
       console.error('Ошибка при сохранении модем-конфига:', err);
     } else {
@@ -520,6 +525,89 @@ ipcMain.on('save-config-modem', (event, configData) => {
     }
   });
 });
+
+ipcMain.on('save-config-modem', (event, configData) => {
+  let currentConfig = {};
+
+  if (fs.existsSync(configPathModem)) {
+    const content = fs.readFileSync(configPathModem, 'utf8');
+    const lines = content.split('\n');
+    for (const line of lines) {
+      const [key, value] = line.split('=');
+      if (key && value !== undefined) {
+        currentConfig[key.trim()] = value.trim();
+      }
+    }
+  }
+
+  for (const [key, value] of Object.entries(configData)) {
+    currentConfig[key] = value;
+  }
+
+  const keysToRemove = ['RSSI', 'good', 'bad', 'connType', 'normal', 'HW_VER', 'APP_VER', 'DEV_MODEL'];
+  for (const key of keysToRemove) {
+    delete currentConfig[key];
+  }
+
+
+  const updatedLines = Object.entries(currentConfig)
+    .map(([key, value]) => `${key}=${value}`)
+    .join('\n');
+
+  fs.writeFile(configPathModem, updatedLines, 'utf8', (err) => {
+    if (err) {
+      console.error('Error save config:', err);
+    } else {
+      console.log('Saved!');
+    }
+  });
+});
+
+ipcMain.on('save-file-config-modem', async(event, configData) => {
+
+  const { canceled, filePath } = await dialog.showSaveDialog({
+    title: 'Сохранить конфигурацию модема',
+    defaultPath: 'modem-config.conf', // Имя файла по умолчанию
+    filters: [
+      { name: 'Config Files', extensions: ['conf'] },
+      { name: 'All Files', extensions: ['*'] }
+    ]
+  });
+
+  if (canceled || !filePath) {
+    console.log('Сохранение отменено пользователем.');
+    return;
+  }
+
+  
+  let currentConfig = {};
+
+
+  for (const [key, value] of Object.entries(configData)) {
+    currentConfig[key] = value;
+  }
+
+  const keysToRemove = ['RSSI', 'good', 'bad', 'connType', 'normal', 'HW_VER', 'APP_VER', 'DEV_MODEL'];
+  for (const key of keysToRemove) {
+    delete currentConfig[key];
+  }
+
+  const updatedLines = Object.entries(currentConfig)
+    .map(([key, value]) => `${key}=${value}`)
+    .join('\n');
+
+  fs.writeFile(filePath, updatedLines, 'utf8', (err) => {
+    if (err) {
+      console.error('Error save config:', err);
+      event.reply('save-file-config-modem-result', { success: false, error: err.message });
+    } else {
+      console.log('Saved!');
+      event.reply('save-file-config-modem-result', { success: true, filePath });
+    }
+  });
+});
+
+
 
 function parseModuleData(raw) {
   const result = {};
@@ -552,7 +640,7 @@ ipcMain.on('open-settings-window', () => {
   if (!settingsWindow) {
     settingsWindow = new BrowserWindow({
       width: 800,
-      height: 590,
+      height: 520,
       title: 'Настройки подключения',
       webPreferences: {
         nodeIntegration: true,
@@ -577,7 +665,7 @@ ipcMain.on('open-settings-window', () => {
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: isDevMode ? 1800 : 945,
-    height: 975,
+    height: 995,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
